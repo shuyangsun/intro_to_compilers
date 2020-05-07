@@ -1,2 +1,2 @@
-# intro_to_compilers
-Introduction to Compilers and Language Design
+# Intro to Compilers and Language Design
+
