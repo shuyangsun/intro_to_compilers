@@ -14,7 +14,7 @@ where
     fn transition(&self, state: U, alphabet: T) -> HashSet<U>;
 
     fn epsilon_closure_states(&self, state: U) -> HashSet<U> {
-        let mut result = HashSet::<U>::new();
+        let mut result = HashSet::new();
         result.insert(state.clone());
         let mut stack = vec![state];
         while !stack.is_empty() {
@@ -32,7 +32,7 @@ where
 
     fn epsilon_closure_transition(&self, state: U, alphabet: T) -> HashSet<U> {
         let start_states = self.epsilon_closure_states(state.clone());
-        let mut neighbors = HashSet::<U>::new();
+        let mut neighbors = HashSet::new();
         for start in start_states.iter() {
             let cur_states = self.transition(start.clone(), alphabet.clone());
             for cur in cur_states {
@@ -48,7 +48,7 @@ where
     {
         let mut cur_states = self.epsilon_closure_states(self.start_state());
         for alphabet in content.into_iter() {
-            let mut next_states = HashSet::<U>::new();
+            let mut next_states = HashSet::new();
             for state in cur_states.iter() {
                 next_states
                     .extend(self.epsilon_closure_transition(state.clone(), alphabet.clone()));

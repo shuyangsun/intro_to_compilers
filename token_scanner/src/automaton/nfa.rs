@@ -39,9 +39,9 @@ where
     fn transition(&self, state: U, alphabet: T) -> HashSet<U> {
         let alphabet_map = self.transition_map.get(&state);
         match alphabet_map {
-            None => HashSet::<U>::new(),
+            None => HashSet::new(),
             Some(next_states_map) => match next_states_map.get(&alphabet) {
-                None => HashSet::<U>::new(),
+                None => HashSet::new(),
                 Some(val) => val.clone(),
             },
         }
@@ -53,7 +53,7 @@ where
     T: Alphabet,
     U: StateIdentifier,
 {
-    pub fn from<'a>(
+    pub fn from(
         states: HashSet<U>,
         alphabets: HashSet<T>,
         start_state: U,
@@ -67,5 +67,28 @@ where
             accepted_states,
             transition_map,
         }
+    }
+
+    pub fn from_map(
+        start_state: U,
+        accepted_states: HashSet<U>,
+        transition_map: HashMap<U, HashMap<T, HashSet<U>>>,
+    ) -> Self {
+        let mut states = HashSet::new();
+        let mut alphabets = HashSet::new();
+        for (state, alphabet_map) in transition_map.iter() {
+            states.insert(state.clone());
+            for (alphabet, dst_states) in alphabet_map.iter() {
+                alphabets.insert(alphabet.clone());
+                states.extend(dst_states.clone());
+            }
+        }
+        Self::from(
+            states,
+            alphabets,
+            start_state,
+            accepted_states,
+            transition_map,
+        )
     }
 }
