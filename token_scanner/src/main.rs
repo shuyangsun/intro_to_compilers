@@ -26,6 +26,11 @@ fn main() {
         },
     );
 
+    println!(
+        "Finite automaton is deterministic: {}",
+        nfa.is_deterministic()
+    );
+
     let strings = vec!["", "0", "00", "001", "01", "010", "0100", "0101", "01011"];
     for string in strings {
         println!("{}: {}", string, nfa.accept(String::from(string).chars()));

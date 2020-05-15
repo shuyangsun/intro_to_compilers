@@ -63,4 +63,22 @@ where
         }
         false
     }
+
+    fn is_deterministic(&self) -> bool {
+        for state in self.states() {
+            if self.epsilon_closure_states(state.clone()).len() > 1 {
+                return false;
+            }
+            for alphabet in self.alphabets() {
+                if self
+                    .transition(state.clone(), Alphabet::Content(alphabet.clone()))
+                    .len()
+                    > 1
+                {
+                    return false;
+                }
+            }
+        }
+        true
+    }
 }
