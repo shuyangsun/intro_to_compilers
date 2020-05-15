@@ -83,6 +83,10 @@ where
                 states.extend(dst_states.clone());
             }
         }
+        if alphabets.contains(&T::empty()) {
+            alphabets.remove(&T::empty());
+        }
+
         Self::from(
             states,
             alphabets,
