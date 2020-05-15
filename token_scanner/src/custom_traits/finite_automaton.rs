@@ -1,17 +1,18 @@
+use crate::custom_traits::alphabet::NoneEmptyAlphabet;
 use crate::{Alphabet, StateIdentifier};
 use std::collections::HashSet;
 use std::iter::Iterator;
 
 pub trait FiniteAutomaton<T, U>
 where
-    T: Alphabet,
+    T: NoneEmptyAlphabet,
     U: StateIdentifier,
 {
     fn states(&self) -> &HashSet<U>;
     fn alphabets(&self) -> &HashSet<T>;
     fn start_state(&self) -> U;
     fn accepted_states(&self) -> &HashSet<U>;
-    fn transition(&self, state: U, alphabet: T) -> HashSet<U>;
+    fn transition(&self, state: U, alphabet: Alphabet<T>) -> HashSet<U>;
 
     fn epsilon_closure_states(&self, state: U) -> HashSet<U> {
         let mut result = HashSet::new();
@@ -19,7 +20,7 @@ where
         let mut stack = vec![state];
         while !stack.is_empty() {
             let cur_state = stack.pop().unwrap();
-            for neighbor in self.transition(cur_state, T::empty()) {
+            for neighbor in self.transition(cur_state, Alphabet::Epsilon) {
                 if result.contains(&neighbor) {
                     continue;
                 }
@@ -34,7 +35,7 @@ where
         let start_states = self.epsilon_closure_states(state.clone());
         let mut neighbors = HashSet::new();
         for start in start_states.iter() {
-            let cur_states = self.transition(start.clone(), alphabet.clone());
+            let cur_states = self.transition(start.clone(), Alphabet::Content(alphabet.clone()));
             for cur in cur_states {
                 neighbors.extend(self.epsilon_closure_states(cur));
             }

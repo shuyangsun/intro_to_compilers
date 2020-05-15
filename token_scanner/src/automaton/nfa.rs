@@ -1,12 +1,13 @@
+use crate::custom_traits::alphabet::NoneEmptyAlphabet;
 use crate::{Alphabet, FiniteAutomaton, StateIdentifier};
 use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 
-type TransitionMap<T, U> = HashMap<U, HashMap<T, HashSet<U>>>;
+type TransitionMap<T, U> = HashMap<U, HashMap<Alphabet<T>, HashSet<U>>>;
 
 pub struct NFA<T, U>
 where
-    T: Alphabet,
+    T: NoneEmptyAlphabet,
     U: StateIdentifier,
 {
     states: HashSet<U>,
@@ -18,7 +19,7 @@ where
 
 impl<T, U> FiniteAutomaton<T, U> for NFA<T, U>
 where
-    T: Alphabet,
+    T: NoneEmptyAlphabet,
     U: StateIdentifier,
 {
     fn states(&self) -> &HashSet<U, RandomState> {
@@ -36,7 +37,7 @@ where
         &self.accepted_states
     }
 
-    fn transition(&self, state: U, alphabet: T) -> HashSet<U> {
+    fn transition(&self, state: U, alphabet: Alphabet<T>) -> HashSet<U> {
         let alphabet_map = self.transition_map.get(&state);
         match alphabet_map {
             None => HashSet::new(),
@@ -50,7 +51,7 @@ where
 
 impl<T, U> NFA<T, U>
 where
-    T: Alphabet,
+    T: NoneEmptyAlphabet,
     U: StateIdentifier,
 {
     pub fn from(
@@ -72,19 +73,19 @@ where
     pub fn from_map(
         start_state: U,
         accepted_states: HashSet<U>,
-        transition_map: HashMap<U, HashMap<T, HashSet<U>>>,
+        transition_map: TransitionMap<T, U>,
     ) -> Self {
         let mut states = HashSet::new();
         let mut alphabets = HashSet::new();
         for (state, alphabet_map) in transition_map.iter() {
             states.insert(state.clone());
             for (alphabet, dst_states) in alphabet_map.iter() {
-                alphabets.insert(alphabet.clone());
+                match alphabet {
+                    Alphabet::<T>::Epsilon => false,
+                    Alphabet::<T>::Content(val) => alphabets.insert(val.clone()),
+                };
                 states.extend(dst_states.clone());
             }
-        }
-        if alphabets.contains(&T::empty()) {
-            alphabets.remove(&T::empty());
         }
 
         Self::from(

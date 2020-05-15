@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate maplit;
-use token_scanner::{Empty, FiniteAutomaton, NFA};
+#[macro_use]
+extern crate token_scanner;
+use token_scanner::{Alphabet, FiniteAutomaton, NFA};
 
 fn main() {
     let nfa = NFA::from_map(
@@ -8,18 +10,18 @@ fn main() {
         hashset! {0, 2, 4},
         hashmap! {
             0 => hashmap!{
-                '0'=> hashset!{1}
+                alp!('0')=> hashset!{1}
             },
             1 => hashmap!{
-                '1'=> hashset!{2},
-                char::empty() => hashset!{3}
+                alp!('1')=> hashset!{2},
+                eps!() => hashset!{3}
             },
             2 => hashmap!{
-                '0'=> hashset!{2},
-                '1'=> hashset!{1}
+                alp!('0')=> hashset!{2},
+                alp!('1')=> hashset!{1}
             },
             3 => hashmap!{
-                '0' => hashset!{4},
+                alp!('0') => hashset!{4},
             }
         },
     );
