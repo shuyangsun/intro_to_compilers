@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Display};
 use std::hash::Hash;
 
 pub trait Empty: PartialEq + Sized {
@@ -6,8 +7,20 @@ pub trait Empty: PartialEq + Sized {
         *self == Self::empty()
     }
 }
+pub trait Alphabet: Eq + Hash + Clone + Empty + Display + Debug {}
+pub trait StateIdentifier: Clone + Eq + Hash + Display + Debug {}
 
-pub trait Alphabet: Eq + Hash + Clone + Empty {}
+impl StateIdentifier for String {}
+impl StateIdentifier for &str {}
+impl StateIdentifier for char {}
+
+impl Empty for char {
+    fn empty() -> Self {
+        '\n'
+    }
+}
+
+impl Alphabet for char {}
 
 impl Empty for &str {
     fn empty() -> Self {
@@ -15,11 +28,15 @@ impl Empty for &str {
     }
 }
 
+impl Alphabet for &str {}
+
 impl Empty for String {
     fn empty() -> Self {
         String::from("")
     }
 }
+
+impl Alphabet for String {}
 
 macro_rules! impl_empty {
     // The pattern for a single `eval`
@@ -29,6 +46,9 @@ macro_rules! impl_empty {
                 Self::max_value()
             }
         }
+
+        impl Alphabet for $type_name {}
+        impl StateIdentifier for $type_name {}
     };
 
     ($type_name:ty, $($type_names:ty),+) => {

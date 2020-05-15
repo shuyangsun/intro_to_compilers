@@ -1,10 +1,6 @@
-use crate::Alphabet;
+use crate::{Alphabet, StateIdentifier};
 use std::collections::HashSet;
-use std::fmt::Display;
-use std::hash::Hash;
 use std::iter::Iterator;
-
-pub trait StateIdentifier: Clone + Eq + Hash + Display {}
 
 pub trait FiniteAutomaton<T, U>
 where
@@ -13,21 +9,17 @@ where
 {
     fn states(&self) -> &HashSet<U>;
     fn alphabets(&self) -> &HashSet<T>;
-    fn transition_func(&self) -> &fn(U, T) -> HashSet<U>;
     fn start_state(&self) -> U;
     fn accepted_states(&self) -> &HashSet<U>;
-
-    fn transition(&self, state: U, alphabet: T) -> HashSet<U> {
-        self.transition_func()(state, alphabet)
-    }
+    fn transition(&self, state: U, alphabet: T) -> HashSet<U>;
 
     fn epsilon_closure_states(&self, state: U) -> HashSet<U> {
         let mut result = HashSet::<U>::new();
         result.insert(state.clone());
-        let mut stack = vec![state.clone()];
+        let mut stack = vec![state];
         while !stack.is_empty() {
             let cur_state = stack.pop().unwrap();
-            for neighbor in self.transition(cur_state.clone(), T::empty()) {
+            for neighbor in self.transition(cur_state, T::empty()) {
                 if result.contains(&neighbor) {
                     continue;
                 }
@@ -39,14 +31,15 @@ where
     }
 
     fn epsilon_closure_transition(&self, state: U, alphabet: T) -> HashSet<U> {
-        let mut start_states = self.epsilon_closure_states(state.clone());
-        start_states.extend(self.transition(state, alphabet));
+        let start_states = self.epsilon_closure_states(state.clone());
         let mut neighbors = HashSet::<U>::new();
-        for cur_state in start_states.iter() {
-            neighbors.extend(self.epsilon_closure_states(cur_state.clone()));
+        for start in start_states.iter() {
+            let cur_states = self.transition(start.clone(), alphabet.clone());
+            for cur in cur_states {
+                neighbors.extend(self.epsilon_closure_states(cur));
+            }
         }
-        start_states.extend(neighbors);
-        start_states
+        neighbors
     }
 
     fn accept<S>(&self, content: S) -> bool
@@ -62,10 +55,11 @@ where
             }
             cur_states = next_states;
         }
-        cur_states
-            .intersection(self.accepted_states())
-            .collect::<Vec<&U>>()
-            .len()
-            > 0
+        for state in self.accepted_states() {
+            if cur_states.contains(state) {
+                return true;
+            }
+        }
+        false
     }
 }
