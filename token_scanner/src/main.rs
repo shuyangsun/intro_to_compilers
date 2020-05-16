@@ -35,4 +35,5 @@ fn main() {
     for string in strings {
         println!("{}: {}", string, nfa.accept(String::from(string).chars()));
     }
+    nfa.export_graphviz_dot_file(String::from("/Users/shuyangsun/Desktop/nfa.dot"));
 }

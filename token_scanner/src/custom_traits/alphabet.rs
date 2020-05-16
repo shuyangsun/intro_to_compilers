@@ -1,15 +1,43 @@
-use std::fmt::{Debug, Display};
+use std::fmt::{Debug, Display, Formatter, Result};
 use std::hash::Hash;
 
 pub trait NoneEmptyAlphabet: Eq + Hash + Clone + Display + Debug {}
 
-#[derive(PartialEq, Eq, Clone, Hash, Debug)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 pub enum Alphabet<T>
 where
     T: NoneEmptyAlphabet,
 {
     Epsilon,
     Content(T),
+}
+
+fn alphabet_to_string<T>(alphabet: &Alphabet<T>) -> String
+where
+    T: NoneEmptyAlphabet,
+{
+    match alphabet {
+        Alphabet::Epsilon => String::from("ϵ"),
+        Alphabet::Content(val) => val.to_string(),
+    }
+}
+
+impl<T> Display for Alphabet<T>
+where
+    T: NoneEmptyAlphabet,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{}", alphabet_to_string(self))
+    }
+}
+
+impl<T> Debug for Alphabet<T>
+where
+    T: NoneEmptyAlphabet,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{}", alphabet_to_string(self))
+    }
 }
 
 #[macro_export]
