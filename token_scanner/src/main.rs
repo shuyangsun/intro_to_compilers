@@ -1,8 +1,5 @@
-#[macro_use]
-extern crate maplit;
-#[macro_use]
-extern crate token_scanner;
-use token_scanner::{Alphabet, FiniteAutomaton, NFA};
+use maplit::{hashmap, hashset};
+use token_scanner::{alp, eps, Alphabet, FiniteAutomaton, NFA};
 
 fn main() {
     let nfa = NFA::from_map(

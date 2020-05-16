@@ -1,5 +1,6 @@
 use crate::custom_traits::alphabet::NoneEmptyAlphabet;
 use crate::{Alphabet, StateIdentifier};
+use maplit::hashset;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::iter::{FromIterator, Iterator};
@@ -17,8 +18,7 @@ where
     fn transition(&self, state: U, alphabet: Alphabet<T>) -> HashSet<U>;
 
     fn epsilon_closure_states(&self, state: U) -> HashSet<U> {
-        let mut result = HashSet::new();
-        result.insert(state.clone());
+        let mut result = hashset! { state.clone() };
         let mut stack = vec![state];
         while !stack.is_empty() {
             let cur_state = stack.pop().unwrap();
