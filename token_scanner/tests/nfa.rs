@@ -2,7 +2,7 @@
 mod tests {
     use maplit::{hashmap, hashset};
     use std::collections::{HashMap, HashSet};
-    use token_scanner::{alp, eps, Alphabet, FiniteAutomaton, NFA};
+    use token_scanner::{Alphabet, FiniteAutomaton, NFA};
 
     #[test]
     fn empty_nfa() {
@@ -63,18 +63,18 @@ mod tests {
             hashset! {0, 2, 4},
             hashmap! {
                 0 => hashmap!{
-                    alp!('0')=> hashset!{1}
+                    Some('0')=> hashset!{1}
                 },
                 1 => hashmap!{
-                    alp!('1')=> hashset!{2},
-                    eps!() => hashset!{3}
+                    Some('1')=> hashset!{2},
+                    None => hashset!{3}
                 },
                 2 => hashmap!{
-                    alp!('0')=> hashset!{2},
-                    alp!('1')=> hashset!{1}
+                    Some('0')=> hashset!{2},
+                    Some('1')=> hashset!{1}
                 },
                 3 => hashmap!{
-                    alp!('0') => hashset!{4},
+                    Some('0') => hashset!{4},
                 }
             },
         );

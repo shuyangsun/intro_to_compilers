@@ -1,72 +1,8 @@
-use std::fmt::{Debug, Display, Formatter, Result};
+use std::fmt::{Debug, Display};
 use std::hash::Hash;
 
 pub trait NoneEmptyAlphabet: Eq + Hash + Clone + Display + Debug {}
-
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub enum Alphabet<T>
-where
-    T: NoneEmptyAlphabet,
-{
-    Epsilon,
-    Content(T),
-}
-
-fn alphabet_to_string<T>(alphabet: &Alphabet<T>) -> String
-where
-    T: NoneEmptyAlphabet,
-{
-    match alphabet {
-        Alphabet::Epsilon => String::from("ϵ"),
-        Alphabet::Content(val) => val.to_string(),
-    }
-}
-
-impl<T> Display for Alphabet<T>
-where
-    T: NoneEmptyAlphabet,
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "{}", alphabet_to_string(self))
-    }
-}
-
-impl<T> Debug for Alphabet<T>
-where
-    T: NoneEmptyAlphabet,
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "{}", alphabet_to_string(self))
-    }
-}
-
-/// Use `eps!` macro to create empty alphabet. Since the Alphabet enum has to be associated with a
-/// generic type, explicit type annoation is sometimes needed. However, in most usecased the type
-/// can be inferred by the compiler.
-/// ```
-/// use maplit::hashset;
-/// use token_scanner::{Alphabet, eps, alp};
-/// let empty: Alphabet<char> = eps!();  // Explicit type annotation.
-/// let alphabets = hashset!{alp!('a'), eps!()};  // Inferred by compiler.
-/// ```
-#[macro_export]
-macro_rules! eps {
-    () => {{
-        Alphabet::Epsilon
-    }};
-}
-
-/// Use `alp!` macro to create alphabets.
-/// ```
-/// use token_scanner::{alp, Alphabet};
-/// let a = alp!('a');
-/// ```
-#[macro_export]
-macro_rules! alp {
-    ($val: expr) => {{
-        Alphabet::Content($val)
-    }};
-}
+pub type Alphabet<T> = Option<T>;
 
 /// Any automaton state has an identifier, which will also be used as its label. The identifier has
 /// to implement `StateIdentifier` trait. This trait is implemented for `usize`, `i8`, `i32`, `i64`,

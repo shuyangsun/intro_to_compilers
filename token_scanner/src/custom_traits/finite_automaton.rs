@@ -22,7 +22,7 @@ where
         let mut stack = vec![state];
         while !stack.is_empty() {
             let cur_state = stack.pop().unwrap();
-            for neighbor in self.transition(cur_state, Alphabet::Epsilon) {
+            for neighbor in self.transition(cur_state, None) {
                 if result.contains(&neighbor) {
                     continue;
                 }
@@ -37,7 +37,7 @@ where
         let start_states = self.epsilon_closure_states(state.clone());
         let mut neighbors = HashSet::new();
         for start in start_states.iter() {
-            let cur_states = self.transition(start.clone(), Alphabet::Content(alphabet.clone()));
+            let cur_states = self.transition(start.clone(), Some(alphabet.clone()));
             for cur in cur_states {
                 neighbors.extend(self.epsilon_closure_states(cur));
             }
@@ -72,11 +72,7 @@ where
                 return false;
             }
             for alphabet in self.alphabets() {
-                if self
-                    .transition(state.clone(), Alphabet::Content(alphabet.clone()))
-                    .len()
-                    != 1
-                {
+                if self.transition(state.clone(), Some(alphabet.clone())).len() != 1 {
                     return false;
                 }
             }
@@ -94,7 +90,8 @@ where
         }
 
         let mut edges = Vec::<(usize, usize, String)>::new();
-        let epsilon_string = String::from("$");
+        let epsilon_utf8 = "&#949;";
+        let epsilon_string = String::from(epsilon_utf8);
         for (i, node) in nodes.iter().enumerate() {
             for next_state in self.epsilon_closure_states(node.clone()) {
                 if *node != next_state {
@@ -106,8 +103,7 @@ where
                 }
             }
             for alphabet in self.alphabets() {
-                for next_state in self.transition(node.clone(), Alphabet::Content(alphabet.clone()))
-                {
+                for next_state in self.transition(node.clone(), Some(alphabet.clone())) {
                     edges.push((
                         i,
                         nodes_to_idx.get(&next_state).unwrap().clone(),

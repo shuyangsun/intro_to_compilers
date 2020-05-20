@@ -95,8 +95,8 @@ where
             states.insert(state.clone());
             for (alphabet, dst_states) in alphabet_map.iter() {
                 match alphabet {
-                    Alphabet::<T>::Epsilon => false,
-                    Alphabet::<T>::Content(val) => alphabets.insert(val.clone()),
+                    None => false,
+                    Some(val) => alphabets.insert(val.clone()),
                 };
                 states.extend(dst_states.clone());
             }
