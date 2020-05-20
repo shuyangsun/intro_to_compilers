@@ -40,6 +40,15 @@ where
     }
 }
 
+/// Use `eps!` macro to create empty alphabet. Since the Alphabet enum has to be associated with a
+/// generic type, explicit type annoation is sometimes needed. However, in most usecased the type
+/// can be inferred by the compiler.
+/// ```
+/// use maplit::hashset;
+/// use token_scanner::{Alphabet, eps, alp};
+/// let empty: Alphabet<char> = eps!();  // Explicit type annotation.
+/// let alphabets = hashset!{alp!('a'), eps!()};  // Inferred by compiler.
+/// ```
 #[macro_export]
 macro_rules! eps {
     () => {{
@@ -47,6 +56,11 @@ macro_rules! eps {
     }};
 }
 
+/// Use `alp!` macro to create alphabets.
+/// ```
+/// use token_scanner::{alp, Alphabet};
+/// let a = alp!('a');
+/// ```
 #[macro_export]
 macro_rules! alp {
     ($val: expr) => {{
@@ -54,6 +68,9 @@ macro_rules! alp {
     }};
 }
 
+/// Any automaton state has an identifier, which will also be used as its label. The identifier has
+/// to implement `StateIdentifier` trait. This trait is implemented for `usize`, `i8`, `i32`, `i64`,
+/// `i128`, `char`, `&str` and `String` by default.
 pub trait StateIdentifier: Clone + Eq + Hash + Display + Debug {}
 
 macro_rules! impl_alphabet {
