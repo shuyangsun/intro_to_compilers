@@ -47,7 +47,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn nfa_invalid() {
-        let _ = NFA::from(
+        let _ = NFA::from_formal(
             hashset! {0, 1},
             hashset! {'0', '1'},
             2,

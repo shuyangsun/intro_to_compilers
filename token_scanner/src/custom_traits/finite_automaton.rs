@@ -6,11 +6,20 @@ use std::fs::File;
 use std::iter::{FromIterator, Iterator};
 use std::vec::Vec;
 
+pub type TransitionMap<T, U> = HashMap<U, HashMap<Alphabet<T>, HashSet<U>>>;
+
 pub trait FiniteAutomaton<T, U>
 where
     T: NoneEmptyAlphabet,
     U: StateIdentifier,
 {
+    fn from_formal(
+        states: HashSet<U>,
+        alphabets: HashSet<T>,
+        start_state: U,
+        accepted_states: HashSet<U>,
+        transition_map: TransitionMap<T, U>,
+    ) -> Self;
     fn states(&self) -> &HashSet<U>;
     fn alphabets(&self) -> &HashSet<T>;
     fn start_state(&self) -> U;
