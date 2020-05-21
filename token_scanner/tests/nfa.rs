@@ -79,7 +79,7 @@ mod tests {
             },
         );
         assert!(!nfa.is_deterministic());
-        let dfa = nfa.to_dfa_with_string_label();
+        let dfa = nfa.to_dfa();
         assert!(dfa.is_deterministic());
 
         let accept_strings = vec!["", "00", "01", "010", "0100", "01011"];

@@ -1,27 +1,22 @@
 use crate::custom_traits::alphabet::NoneEmptyAlphabet;
-use crate::{Alphabet, StateIdentifier, NFA};
+use crate::{Alphabet, StateIdentifier, DFA};
 use maplit::{hashmap, hashset};
 use std::cmp::PartialEq;
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
+use std::fmt::{Debug, Display, Formatter, Result};
 use std::fs::File;
 use std::hash::{Hash, Hasher};
 use std::iter::{FromIterator, Iterator};
 use std::vec::Vec;
 
-pub type TransitionMap<T, U> = HashMap<U, HashMap<Alphabet<T>, HashSet<U>>>;
+pub type NFATransitionMap<T, U> = HashMap<U, HashMap<Alphabet<T>, HashSet<U>>>;
+pub type DFATransitionMap<T, U> = HashMap<U, HashMap<T, U>>;
 
 pub trait FiniteAutomaton<T, U>
 where
     T: NoneEmptyAlphabet,
     U: StateIdentifier,
 {
-    fn from_formal(
-        states: HashSet<U>,
-        alphabets: HashSet<T>,
-        start_state: U,
-        accepted_states: HashSet<U>,
-        transition_map: TransitionMap<T, U>,
-    ) -> Self;
     fn states(&self) -> &HashSet<U>;
     fn alphabets(&self) -> &HashSet<T>;
     fn start_state(&self) -> U;
@@ -91,23 +86,20 @@ where
         true
     }
 
-    fn to_dfa_with_string_label(&self) -> NFA<T, String> {
+    fn to_dfa(&self) -> DFA<T, CommunicativeHashSet<U>> {
         let mut stack = vec![CommunicativeHashSet::from(
             self.epsilon_closure_states(self.start_state()),
         )];
         let new_start_state = stack.first().unwrap().clone();
-        let mut states_to_id = HashMap::new();
+        let mut new_states = HashSet::new();
         let mut new_transition_map: HashMap<
             CommunicativeHashSet<U>,
             HashMap<T, CommunicativeHashSet<U>>,
         > = HashMap::new();
         while !stack.is_empty() {
             let cur_new_state = stack.pop().unwrap().clone();
-            if !states_to_id.contains_key(&cur_new_state) {
-                states_to_id.insert(
-                    cur_new_state.clone(),
-                    format!("{:?}", cur_new_state.hashset),
-                );
+            if !new_states.contains(&cur_new_state) {
+                new_states.insert(cur_new_state.clone());
             }
             for alphabet in self.alphabets() {
                 let mut to_states = HashSet::new();
@@ -117,12 +109,9 @@ where
                     );
                 }
                 let to_states_set = CommunicativeHashSet::from(to_states);
-                if !states_to_id.contains_key(&to_states_set) {
+                if !new_states.contains(&to_states_set) {
                     stack.push(to_states_set.clone());
-                    states_to_id.insert(
-                        cur_new_state.clone(),
-                        format!("{:?}", cur_new_state.hashset),
-                    );
+                    new_states.insert(cur_new_state.clone());
                 }
                 match new_transition_map.get_mut(&cur_new_state) {
                     None => {
@@ -138,33 +127,30 @@ where
             }
         }
         let new_accepted_states = HashSet::from_iter(
-            states_to_id
-                .keys()
+            new_states
+                .iter()
                 .filter(|ele| {
                     for state in &ele.hashset {
-                        if self.accepted_states().contains(&state) {
+                        if self.accepted_states().contains(state) {
                             return true;
                         }
                     }
                     false
                 })
-                .map(|ele| states_to_id.get(ele).unwrap().clone()),
+                .map(|ele| ele.clone()),
         );
-        let mut final_transition_map: TransitionMap<T, String> = HashMap::new();
+        let mut final_transition_map: DFATransitionMap<T, CommunicativeHashSet<U>> = HashMap::new();
         for (from_state, map) in new_transition_map.iter() {
             let mut new_map = HashMap::new();
             for (alphabet, to_state) in map.iter() {
-                new_map.insert(
-                    Some(alphabet.clone()),
-                    hashset! {states_to_id.get(to_state).unwrap().clone()},
-                );
+                new_map.insert(alphabet.clone(), to_state.clone());
             }
-            final_transition_map.insert(states_to_id.get(from_state).unwrap().clone(), new_map);
+            final_transition_map.insert(from_state.clone(), new_map);
         }
-        let res = NFA::from_formal(
-            HashSet::from_iter(states_to_id.iter().map(|(_, v)| v.clone())),
+        let res = DFA::from_formal(
+            new_states,
             self.alphabets().clone(),
-            states_to_id.get(&new_start_state).unwrap().clone(),
+            new_start_state,
             new_accepted_states,
             final_transition_map,
         );
@@ -264,7 +250,7 @@ impl<'a> dot::GraphWalk<'a, Nd, Ed<'a>> for Graph {
 }
 
 #[derive(Clone)]
-struct CommunicativeHashSet<T>
+pub struct CommunicativeHashSet<T>
 where
     T: Eq + Hash,
 {
@@ -276,7 +262,7 @@ impl<T> CommunicativeHashSet<T>
 where
     T: Eq + Hash,
 {
-    fn from(hashset: HashSet<T>) -> Self {
+    pub fn from(hashset: HashSet<T>) -> Self {
         let mut hash = 0;
         for ele in hashset.iter() {
             let mut hasher = DefaultHasher::new();
@@ -305,4 +291,28 @@ where
     }
 }
 
+impl<T> Display for CommunicativeHashSet<T>
+where
+    T: Eq + Hash + Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        match self.hashset.len() {
+            0 => write!(f, "&empty;"),
+            1 => write!(f, "{:?}", self.hashset.iter().next().unwrap()),
+            _ => write!(f, "{:?}", self.hashset),
+        }
+    }
+}
+
+impl<T> Debug for CommunicativeHashSet<T>
+where
+    T: Eq + Hash + Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
 impl<T> Eq for CommunicativeHashSet<T> where T: Eq + Hash {}
+
+impl<T> StateIdentifier for CommunicativeHashSet<T> where T: StateIdentifier {}

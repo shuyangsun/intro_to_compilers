@@ -33,6 +33,8 @@ fn main() {
         println!("{}: {}", string, nfa.accept(String::from(string).chars()));
     }
     nfa.export_graphviz_dot_file(String::from("/Users/shuyangsun/Desktop/nfa.dot"));
-    nfa.to_dfa_with_string_label()
-        .export_graphviz_dot_file(String::from("/Users/shuyangsun/Desktop/dfa.dot"));
+    let dfa = nfa.to_dfa();
+    dfa.export_graphviz_dot_file(String::from("/Users/shuyangsun/Desktop/dfa.dot"));
+    dfa.to_dfa()
+        .export_graphviz_dot_file(String::from("/Users/shuyangsun/Desktop/dfa2.dot"));
 }

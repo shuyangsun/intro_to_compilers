@@ -1,5 +1,5 @@
 use crate::custom_traits::alphabet::NoneEmptyAlphabet;
-use crate::{Alphabet, FiniteAutomaton, StateIdentifier, TransitionMap};
+use crate::{Alphabet, FiniteAutomaton, NFATransitionMap, StateIdentifier};
 use maplit::hashset;
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
@@ -11,7 +11,7 @@ where
 {
     states: HashSet<U>,
     alphabets: HashSet<T>,
-    transition_map: TransitionMap<T, U>,
+    transition_map: NFATransitionMap<T, U>,
     start_state: U,
     accepted_states: HashSet<U>,
 }
@@ -21,35 +21,6 @@ where
     T: NoneEmptyAlphabet,
     U: StateIdentifier,
 {
-    fn from_formal(
-        states: HashSet<U>,
-        alphabets: HashSet<T>,
-        start_state: U,
-        accepted_states: HashSet<U>,
-        transition_map: TransitionMap<T, U>,
-    ) -> Self {
-        if !accepted_states.is_subset(&states) {
-            panic!(
-                "Cannot initialize NFA with accepted states {:?} not in all states {:?}.",
-                accepted_states.difference(&states),
-                states
-            )
-        }
-        if !states.contains(&start_state) {
-            panic!(
-                "Cannot initialize NFA with start state {} not in all states {:?}.",
-                start_state, states
-            )
-        }
-        Self {
-            states,
-            alphabets,
-            start_state,
-            accepted_states,
-            transition_map,
-        }
-    }
-
     fn states(&self) -> &HashSet<U, RandomState> {
         &self.states
     }
@@ -82,10 +53,39 @@ where
     T: NoneEmptyAlphabet,
     U: StateIdentifier,
 {
+    pub fn from_formal(
+        states: HashSet<U>,
+        alphabets: HashSet<T>,
+        start_state: U,
+        accepted_states: HashSet<U>,
+        transition_map: NFATransitionMap<T, U>,
+    ) -> Self {
+        if !accepted_states.is_subset(&states) {
+            panic!(
+                "Cannot initialize NFA with accepted states {:?} not in all states {:?}.",
+                accepted_states.difference(&states),
+                states
+            )
+        }
+        if !states.contains(&start_state) {
+            panic!(
+                "Cannot initialize NFA with start state {} not in all states {:?}.",
+                start_state, states
+            )
+        }
+        Self {
+            states,
+            alphabets,
+            start_state,
+            accepted_states,
+            transition_map,
+        }
+    }
+
     pub fn from_map(
         start_state: U,
         accepted_states: HashSet<U>,
-        transition_map: TransitionMap<T, U>,
+        transition_map: NFATransitionMap<T, U>,
     ) -> Self {
         let mut states = hashset! {start_state.clone()};
         let mut alphabets = HashSet::new();
