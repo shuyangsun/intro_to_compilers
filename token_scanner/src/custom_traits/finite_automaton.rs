@@ -1,8 +1,10 @@
 use crate::custom_traits::alphabet::NoneEmptyAlphabet;
-use crate::{Alphabet, StateIdentifier};
-use maplit::hashset;
-use std::collections::{HashMap, HashSet};
+use crate::{Alphabet, StateIdentifier, NFA};
+use maplit::{hashmap, hashset};
+use std::cmp::PartialEq;
+use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::fs::File;
+use std::hash::{Hash, Hasher};
 use std::iter::{FromIterator, Iterator};
 use std::vec::Vec;
 
@@ -87,6 +89,87 @@ where
             }
         }
         true
+    }
+
+    fn to_dfa_with_string_label(&self) -> NFA<T, String> {
+        let mut stack = vec![CommunicativeHashSet::from(
+            self.epsilon_closure_states(self.start_state()),
+        )];
+        let new_start_state = stack.first().unwrap().clone();
+        let mut states_to_id = HashMap::new();
+        let mut new_transition_map: HashMap<
+            CommunicativeHashSet<U>,
+            HashMap<T, CommunicativeHashSet<U>>,
+        > = HashMap::new();
+        while !stack.is_empty() {
+            let cur_new_state = stack.pop().unwrap().clone();
+            if !states_to_id.contains_key(&cur_new_state) {
+                states_to_id.insert(
+                    cur_new_state.clone(),
+                    format!("{:?}", cur_new_state.hashset),
+                );
+            }
+            for alphabet in self.alphabets() {
+                let mut to_states = HashSet::new();
+                for from_state in &cur_new_state.hashset {
+                    to_states.extend(
+                        self.epsilon_closure_transition(from_state.clone(), alphabet.clone()),
+                    );
+                }
+                let to_states_set = CommunicativeHashSet::from(to_states);
+                if !states_to_id.contains_key(&to_states_set) {
+                    stack.push(to_states_set.clone());
+                    states_to_id.insert(
+                        cur_new_state.clone(),
+                        format!("{:?}", cur_new_state.hashset),
+                    );
+                }
+                match new_transition_map.get_mut(&cur_new_state) {
+                    None => {
+                        new_transition_map.insert(
+                            cur_new_state.clone(),
+                            hashmap! {alphabet.clone() => to_states_set },
+                        );
+                    }
+                    Some(val) => {
+                        val.insert(alphabet.clone(), to_states_set);
+                    }
+                };
+            }
+        }
+        let new_accepted_states = HashSet::from_iter(
+            states_to_id
+                .keys()
+                .filter(|ele| {
+                    for state in &ele.hashset {
+                        if self.accepted_states().contains(&state) {
+                            return true;
+                        }
+                    }
+                    false
+                })
+                .map(|ele| states_to_id.get(ele).unwrap().clone()),
+        );
+        let mut final_transition_map: TransitionMap<T, String> = HashMap::new();
+        for (from_state, map) in new_transition_map.iter() {
+            let mut new_map = HashMap::new();
+            for (alphabet, to_state) in map.iter() {
+                new_map.insert(
+                    Some(alphabet.clone()),
+                    hashset! {states_to_id.get(to_state).unwrap().clone()},
+                );
+            }
+            final_transition_map.insert(states_to_id.get(from_state).unwrap().clone(), new_map);
+        }
+        let res = NFA::from_formal(
+            HashSet::from_iter(states_to_id.iter().map(|(_, v)| v.clone())),
+            self.alphabets().clone(),
+            states_to_id.get(&new_start_state).unwrap().clone(),
+            new_accepted_states,
+            final_transition_map,
+        );
+        debug_assert!(res.is_deterministic());
+        res
     }
 
     fn export_graphviz_dot_file(&self, output_file_path: String) {
@@ -179,3 +262,47 @@ impl<'a> dot::GraphWalk<'a, Nd, Ed<'a>> for Graph {
         e.1.clone()
     }
 }
+
+#[derive(Clone)]
+struct CommunicativeHashSet<T>
+where
+    T: Eq + Hash,
+{
+    hash: u64,
+    hashset: HashSet<T>,
+}
+
+impl<T> CommunicativeHashSet<T>
+where
+    T: Eq + Hash,
+{
+    fn from(hashset: HashSet<T>) -> Self {
+        let mut hash = 0;
+        for ele in hashset.iter() {
+            let mut hasher = DefaultHasher::new();
+            ele.hash(&mut hasher);
+            hash += hasher.finish();
+        }
+        Self { hash, hashset }
+    }
+}
+
+impl<T> Hash for CommunicativeHashSet<T>
+where
+    T: Eq + Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u64(self.hash);
+    }
+}
+
+impl<T> PartialEq for CommunicativeHashSet<T>
+where
+    T: Eq + Hash,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.hash == other.hash
+    }
+}
+
+impl<T> Eq for CommunicativeHashSet<T> where T: Eq + Hash {}
