@@ -10,6 +10,9 @@ edition = "2018"
 maplit = "1.0.2"
 dot = "0.1.4"
 
+[dev-dependencies]
+rand = "0.7.3"
+
 [profile.dev]
 opt-level = 0
 

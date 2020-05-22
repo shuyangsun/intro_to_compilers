@@ -254,8 +254,8 @@ pub struct CommunicativeHashSet<T>
 where
     T: Eq + Hash,
 {
-    hash: u64,
-    hashset: HashSet<T>,
+    hash: u128,
+    pub hashset: HashSet<T>,
 }
 
 impl<T> CommunicativeHashSet<T>
@@ -263,13 +263,31 @@ where
     T: Eq + Hash,
 {
     pub fn from(hashset: HashSet<T>) -> Self {
-        let mut hash = 0;
+        let mut hash: u128 = 0;
         for ele in hashset.iter() {
             let mut hasher = DefaultHasher::new();
             ele.hash(&mut hasher);
-            hash += hasher.finish();
+            hash += hasher.finish() as u128;
         }
         Self { hash, hashset }
+    }
+
+    pub fn len(&self) -> usize {
+        self.hashset.len()
+    }
+
+    pub fn contains(&self, val: &T) -> bool {
+        self.hashset.contains(val)
+    }
+
+    pub fn insert(&mut self, val: T) -> bool {
+        if self.contains(&val) {
+            return true;
+        }
+        let mut hasher = DefaultHasher::new();
+        val.hash(&mut hasher);
+        self.hash += hasher.finish() as u128;
+        self.hashset.insert(val)
     }
 }
 
@@ -278,7 +296,7 @@ where
     T: Eq + Hash,
 {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write_u64(self.hash);
+        state.write_u128(self.hash);
     }
 }
 
