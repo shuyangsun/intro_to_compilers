@@ -2,7 +2,7 @@ pub mod pre_defined_fa {
     use crate::DFA;
     use maplit::{hashmap, hashset};
 
-    /// This function returns a DFA that checks is a binary number is divisible by 3.
+    /// This function returns a DFA that checks if a binary number is divisible by 3.
     /// ```
     /// use token_scanner::FiniteAutomaton;
     /// use token_scanner::pre_defined_fa::bin_str_div_by_3;
