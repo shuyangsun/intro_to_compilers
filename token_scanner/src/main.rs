@@ -1,5 +1,5 @@
 use maplit::{hashmap, hashset};
-use token_scanner::{FiniteAutomaton, NFA};
+use token_scanner::{pre_defined_fa, FiniteAutomaton, NFA};
 
 fn main() {
     let nfa = NFA::from_map(
@@ -62,4 +62,17 @@ fn main() {
     nfa.export_graphviz_dot_file(String::from("/Users/shuyangsun/Desktop/nfa.dot"));
     dfa.export_graphviz_dot_file(String::from("/Users/shuyangsun/Desktop/dfa.dot"));
     minimized.export_graphviz_dot_file(String::from("/Users/shuyangsun/Desktop/dfa_min.dot"));
+
+    let new_dfa = pre_defined_fa::bin_str_div_by_3();
+    let numbers = vec![
+        "0",      // 0, true
+        "1",      // 1, false
+        "11",     // 3, true
+        "1001",   // 9, true
+        "10010",  // 18, true
+        "110100", // 52, false
+    ];
+    for num in numbers {
+        println!("{}: {}", num, new_dfa.accept(String::from(num).chars()));
+    }
 }

@@ -22,4 +22,4 @@ macro_rules! impl_alphabet {
     };
 }
 
-impl_alphabet!(usize, i8, i32, i64, i128, char, &str, String);
+impl_alphabet!(usize, u8, i8, u32, i32, u64, i64, u128, i128, char, &str, String);
