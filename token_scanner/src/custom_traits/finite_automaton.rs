@@ -86,6 +86,50 @@ where
         true
     }
 
+    /// Converts an instance that implements `FiniteAutomaton` trait into an instance of
+    /// deterministic finite automaton. The resulting finite automaton has the same set of alphabets
+    /// as the original automaton, however, the type of states has to change.
+    ///
+    /// The reason is
+    /// that when converting a NFA to DFA, the DFA has a maximum of `2^Q` states, where `Q` is the
+    /// number of states in the original NFA, hence we cannot reuse states in the NFA. Since we do
+    /// not specify some kind of generator trait for type `U` (which implements `StateIdentifier`
+    /// trait), we cannot generate new state identifiers directly from type `U`.
+    ///
+    /// The design decision
+    /// made was to use a set of all states the original NFA to represent the new
+    /// state. The new state has to be put into `HashSet`s because the `FiniteAutomaton` trait, so
+    /// `CommunicativeHashSet` is used to represent the new state instead of `HashSet`.
+    ///
+    /// ```
+    /// use token_scanner::{NFA, FiniteAutomaton};
+    /// use maplit::{hashset, hashmap};
+    ///
+    /// let nfa = NFA::from_map(
+    ///     0,
+    ///     hashset! {0, 2, 4},
+    ///     hashmap! {
+    ///         0 => hashmap!{
+    ///             Some('0')=> hashset!{1}
+    ///         },
+    ///         1 => hashmap!{
+    ///             Some('1')=> hashset!{2},
+    ///             None => hashset!{3}
+    ///         },
+    ///         2 => hashmap!{
+    ///             Some('0')=> hashset!{2},
+    ///             Some('1')=> hashset!{1}
+    ///         },
+    ///         3 => hashmap!{
+    ///             Some('0') => hashset!{4},
+    ///         }
+    ///     },
+    /// );
+    /// println!("NFA is deterministic: {}", nfa.is_deterministic());  // false
+    ///
+    /// let dfa = nfa.to_dfa();
+    /// println!("DFA is deterministic: {}", dfa.is_deterministic());  // true
+    /// ```
     fn to_dfa(&self) -> DFA<T, CommunicativeHashSet<U>> {
         let mut stack = vec![CommunicativeHashSet::from(
             self.epsilon_closure_states(self.start_state()),
