@@ -158,6 +158,16 @@ where
         res
     }
 
+    /// Exports the finite automaton as GraphViz dot file to given path.
+    /// ```
+    /// use token_scanner::{pre_defined_fa, FiniteAutomaton};
+    /// use std::env;
+    ///
+    /// let dfa = pre_defined_fa::bin_str_div_by_3();
+    /// let mut tmp_dir = env::temp_dir();
+    /// tmp_dir.push("dfa.dot");
+    /// dfa.export_graphviz_dot_file(tmp_dir.to_str().unwrap().to_string());
+    /// ```
     fn export_graphviz_dot_file(&self, output_file_path: String) {
         let mut output = File::create(output_file_path.clone()).unwrap();
 
